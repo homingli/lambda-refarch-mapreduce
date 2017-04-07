@@ -43,7 +43,7 @@ def lambda_handler(event, context):
     mapper_id = event['mapperId']
    
     # aggr 
-    output = {}
+    totals={}
     line_count = 0
     err = ''
 
@@ -56,15 +56,26 @@ def lambda_handler(event, context):
         
         for line in contents.split('\n')[:-1]:
             line_count +=1
+
             try:
-                data = line.split(',')
-                srcIp = data[0][:8]
-                if srcIp not in output:
-                    output[srcIp] = 0
-                output[srcIp] += float(data[3])
+                data = line.strip().split(',')
+                status = data[-1]
+                if status == "OK":
+                    interface_id = data[2]
+                    srcIp = data[3]
+                    gbytes = float(data[9])/(1024*1024*1024)
+                    if srcIp not in totals:
+                        totals[srcIp] = gbytes
+                    else:
+                        totals[srcIp] += gbytes
+                    #if interface_id not in totals:
+                    #    totals[interface_id] = gbytes
+                    #else:
+                    #    totals[interface_id] += gbytes
+
             except Exception, e:
                 print e
-                #err += '%s' % e
+                err += '%s' % e
 
     time_in_secs = (time.time() - start_time)
     #timeTaken = time_in_secs * 1000000000 # in 10^9 
@@ -79,7 +90,7 @@ def lambda_handler(event, context):
                }
 
     print "metadata", metadata
-    write_to_s3(job_bucket, mapper_fname, json.dumps(output), metadata)
+    write_to_s3(job_bucket, mapper_fname, json.dumps(totals), metadata)
     return pret
 
 '''

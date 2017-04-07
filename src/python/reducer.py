@@ -63,7 +63,7 @@ def lambda_handler(event, context):
             for srcIp, val in json.loads(contents).iteritems():
                 line_count +=1
                 if srcIp not in results:
-                    results[srcIp] = 0
+                    results[srcIp] = 0.0
                 results[srcIp] += float(val)
         except Exception, e:
             print e
